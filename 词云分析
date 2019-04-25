@@ -1,0 +1,46 @@
+from lxml import etree
+import requests
+import time
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import jieba
+from collections import Counter   #引入Counter类作词频统计
+from scipy.misc import imread
+
+with open('D:\chartz.txt','w',encoding='utf-8') as f:
+    page=25
+    for a in range(page):
+        url = 'https://movie.douban.com/subject/26363254/comments?start={}&limit=20&sort=new_score&status=P'.format(a*20)
+        data = requests.get(url).text
+        s=etree.HTML(data)
+        file=s.xpath('//*[@id="comments"]/div/div[2]')
+        time.sleep(3)
+        for div in file:
+            text = div.xpath("./p/span/text()")
+            f.write("{}\n".format(text))
+        print(a/ page * 100, ' %')
+
+f= open('D:\chartz.txt','rb')
+text =f.read().decode('utf-8')
+
+text_jieba = [x for x in jieba.cut(text) if len(x) >= 2]
+c = Counter(text_jieba)
+common_c = c.most_common(100)  #统计词频出现最多的前100个词语
+print(common_c)
+
+ciyun=dict(common_c)
+pic = imread('timg.jpg')
+
+wc1= WordCloud(font_path="simhei.ttf",   # 设置字体可以显示中文
+                background_color="white",       # 背景颜色
+                max_words=100,                  # 词云显示的最大词数
+                #mask=color_mask,                # 设置背景图片
+                max_font_size=320,              # 字体最大值
+                random_state=42,
+                width=1000, height=860, margin=2,# 设置图片默认的大小,但是如果使用背景图片的话,                                                   # 那么保存的图片大小将会按照其大小保存,margin为词语边缘距离
+                )
+
+wc2 = wc1.generate_from_frequencies(ciyun) 
+plt.imshow(wc2)
+plt.axis('off')
+plt.show()
